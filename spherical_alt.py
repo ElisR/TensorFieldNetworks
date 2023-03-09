@@ -1,11 +1,12 @@
 import sympy
 from sympy import Znm, Symbol, simplify, lambdify
 
-from functools import partial
+from functools import partial, lru_cache
 
 from jax import jit
 import jax.numpy as jnp
 
+# This is expected to be the slowest version of all
 def SH_real(l, m):
     """Return JAX version of real spherical harmonics Y(theta, phi)."""
     theta, phi = Symbol("theta", real=True), Symbol("phi", real=True)
@@ -17,9 +18,8 @@ def SH_real(l, m):
 @partial(jit, static_argnums=(1, 2))
 def SH_real_jit(coords, l, m):
     """Return SH applied to an array of shape [*, 3], where last three coords are x, y, z.
-    Expect this function to be slower than using the algebraic methods above.
+    Expect this function to be slower than using the more refined expressions using cartesian coordinates directly.
     """
-    # TODO Think about best ordering of axes.
 
     # Get views
     xs, ys, zs = coords[..., 0], coords[..., 1], coords[..., 2]
@@ -35,7 +35,9 @@ def SH_real_jit(coords, l, m):
     return SH(thetas, phis)
 
 def SH_real_cart(l, m):
-    """Return JAX version of real spherical harmonics in cartesian coordinates Y(x, y, z)."""
+    """Return JAX version of real spherical harmonics in cartesian coordinates Y(x, y, z).
+    Uses a lot of SymPy algebraic simplification in the backend to generate fast expression.
+    """
     theta, phi = Symbol("theta", real=True), Symbol("phi", real=True)
     x, y, z = Symbol("x", real=True), Symbol("y", real=True), Symbol("z", real=True)
 

@@ -7,7 +7,7 @@ from sympy.functions.combinatorial.factorials import binomial, factorial
 
 from functools import partial, lru_cache
 
-from jax import jit, random
+from jax import jit
 import jax.numpy as jnp
 
 from einops import rearrange
@@ -67,6 +67,7 @@ def SolidHarmonic_jit(coords, l, m):
     sh_dict = SolidHarmonicsJax(l)
 
     # Get views
+    # TODO Investigate if exploiting row major order is faster
     xs, ys, zs = coords[..., 0], coords[..., 1], coords[..., 2]
     rs = jnp.sqrt(xs**2 + ys**2 + zs**2)
 
@@ -75,7 +76,24 @@ def SolidHarmonic_jit(coords, l, m):
 # TODO Make this stacked function a lot faster
 @partial(jit, static_argnums=(1,))
 def SolidHarmonics_jit(coords, l):
-    """Applying all spherical harmonics to input."""
+    r"""Applying all real spherical harmonics :math:`Y_{\ell m}(x, y, z)` to input.
+    
+    .. math::
+        r^{\ell}\left(\begin{array}{c}Y_{\ell m} \\ Y_{\ell-m}\end{array}\right)
+        =\sqrt{\frac{2 \ell+1}{2 \pi}} \bar{\Pi}_{\ell}^m(z)
+        \left(\begin{array}{c} A_m \\ B_m \end{array}\right),
+        \quad m>0
+
+    .. math::
+        \bar{\Pi}_{\ell}^m(z)=
+        \left[\frac{(\ell-m) !}{(\ell+m) !}\right]^{1 / 2} \sum_{k=0}^{\lfloor(\ell-m) / 2\rfloor}(-1)^k 2^{-\ell}
+        \left(\begin{array}{l}\ell \\k\end{array}\right)
+        \left(\begin{array}{c}2 \ell-2 k \\ \ell\end{array}\right)
+        \frac{(\ell-2 k) !}{(\ell-2 k-m) !} r^{2 k} z^{\ell-2 k-m}
+
+    .. math::
+        A_m(x, y) \equiv \Re{[(x+i y)^m]}, \qquad B_m(x, y) \equiv \Im{[(x+i y)^m]}
+    """
 
     # TODO See if this can be moved outside
     sh_dict = SolidHarmonicsJax(l)
