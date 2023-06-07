@@ -1,29 +1,38 @@
+"""Module for spherical harmonics in JAX."""
 import math
+from functools import lru_cache, partial
 
+"""Module with custom spherical harmonics implementation, using cartesian coordinates."""
+import jax.numpy as jnp
 import sympy
-from sympy import S, lambdify, Symbol, simplify
+from jax import jit
+from sympy import Expr, S, Symbol, lambdify, simplify
 from sympy.core.numbers import I, pi
 from sympy.functions.combinatorial.factorials import binomial, factorial
 
-from functools import partial, lru_cache
 
-from jax import jit
-import jax.numpy as jnp
-
-from einops import rearrange
-
-def Scale(l):
+def _scale(l: int) -> Expr:
+    """Internal function for scaling factor of spherical harmonics."""
     r = Symbol("r", real=True, positive=True)
 
     return sympy.sqrt((sympy.Integer(2) * l + 1) / (2 * pi)) * r**(-l)
 
-def AB(m):
+
+def _ab(m: int) -> tuple[Expr, Expr]:
+    """Internal function for A and B coefficients of spherical harmonics."""
     x, y = Symbol("x", real=True), Symbol("y", real=True)
 
     power = (x + I * y)**m
     return sympy.re(power), sympy.im(power)
 
-def Pi(l, m):
+
+def _pi(l: int, m: int) -> Expr:
+    """Internal function for Pi coefficient of spherical harmonics.
+    
+    Args:
+        l (int): Order of spherical harmonics.
+        m (int): Index of spherical harmonics.
+    """
     z, r = Symbol("z", real=True), Symbol("r", real=True, positive=True)
 
     prefac = sympy.sqrt(factorial(l - m) / factorial(l + m)) * sympy.sqrt(2 - sympy.KroneckerDelta(m, 0)) / sympy.sqrt(2)
@@ -34,12 +43,20 @@ def Pi(l, m):
 
     return prefac * summation
 
-def SolidHarmonics(l):
+
+def solid_harmonics(l: int) -> dict[int, Expr]:
+    """Returns a dictionary of real spherical harmonics :math:`Y_{\ell m}(x, y, z)`.
+
+    Calculated using SymPy in the backend.
+
+    Args:
+        l (int): Maximum degree of spherical harmonics.
+    """
     SH_dict = {}
 
     for m in range(0, l + 1, 1):
-        A, B = AB(m)
-        pre =  Pi(l, m) * Scale(l)
+        A, B = _ab(m)
+        pre =  _pi(l, m) * _scale(l)
         y_plus = simplify(pre * A)
         y_minus = simplify(pre * B)
 
@@ -50,21 +67,23 @@ def SolidHarmonics(l):
 
     return SH_dict
 
+
 @lru_cache(maxsize=None)
-def SolidHarmonicsJax(l):
-    sh_dict = SolidHarmonics(l)
+def solid_harmonics_jax(l: int) -> dict[int, callable]:
+    """Jaxified version of solid_harmonics."""
+    sh_dict = solid_harmonics(l)
 
     x, y, z = Symbol("x", real=True), Symbol("y", real=True), Symbol("z", real=True)
     r = Symbol("r", real=True, positive=True)
 
     return {m: lambdify([x, y, z, r], sh, modules="jax") for m, sh in sh_dict.items()}
 
+
 @partial(jit, static_argnums=(1, 2))
-def SolidHarmonic_jit(coords, l, m):
+def solid_harmonic_jit(coords: jnp.ndarray, l: int, m: int) -> jnp.ndarray:
     """Applying one spherical harmonic to input."""
-    
     # TODO See if this can be moved outside
-    sh_dict = SolidHarmonicsJax(l)
+    sh_dict = solid_harmonics_jax(l)
 
     # Get views
     # TODO Investigate if exploiting row major order is faster
@@ -73,9 +92,9 @@ def SolidHarmonic_jit(coords, l, m):
 
     return sh_dict[m](xs, ys, zs, rs)
 
-# TODO Make this stacked function a lot faster
+
 @partial(jit, static_argnums=(1,))
-def SolidHarmonics_jit(coords, l):
+def solid_harmonics_jit(coords: jnp.ndarray, l: int) -> jnp.ndarray:
     r"""Applying all real spherical harmonics :math:`Y_{\ell m}(x, y, z)` to input.
     
     .. math::
@@ -96,12 +115,10 @@ def SolidHarmonics_jit(coords, l):
     """
 
     # TODO See if this can be moved outside
-    sh_dict = SolidHarmonicsJax(l)
+    sh_dict = solid_harmonics_jax(l)
 
     # Get views
     xs, ys, zs = coords[..., 0], coords[..., 1], coords[..., 2]
     rs = jnp.sqrt(xs**2 + ys**2 + zs**2)
 
-    # Stacking operation is quite a bit slower than calling  individual results
     return jnp.stack([sh_dict[m](xs, ys, zs, rs) for m in range(-l, l+1)], axis=-1)
-    #return rearrange([sh_dict[m](xs, ys, zs, rs) for m in range(-l, l+1)], "m i -> m i") # Equivalent but maybe slower
