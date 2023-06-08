@@ -5,6 +5,7 @@ from functools import partial, lru_cache
 
 from jax import jit
 import jax.numpy as jnp
+from jax.scipy.special import sph_harm
 
 # This is expected to be the slowest version of all
 def SH_real(l, m):
@@ -15,24 +16,50 @@ def SH_real(l, m):
 
     return lambdify([theta, phi], ylm, modules="jax")
 
-@partial(jit, static_argnums=(1, 2))
-def SH_real_jit(coords, l, m):
-    """Return SH applied to an array of shape [*, 3], where last three coords are x, y, z.
-    Expect this function to be slower than using the more refined expressions using cartesian coordinates directly.
-    """
 
+# NOTE This is obviously broken because of control flow
+def SH_real_native(l, m, thetas, phis):
+    """Return JAX version of real spherical harmonics Y(theta, phi)."""
+    if m == 0:
+        return sph_harm(m, l, phis, thetas, n_max=l)
+    elif m < 0:
+        return jnp.sqrt(2) * (-1)**m * sph_harm(jnp.array([-m]), jnp.array([l]), phis, thetas, n_max=l).imag
+    else:
+        return jnp.sqrt(2) * (-1)**m * sph_harm(jnp.array([m]), jnp.array([l]), phis, thetas, n_max=l).real
+
+
+def convert_to_spherical_coords(coords):
+    """Convert cartesian coordinates to spherical coordinates."""
     # Get views
     xs, ys, zs = coords[..., 0], coords[..., 1], coords[..., 2]
 
     # Convert to spherical coords
     radii = jnp.sqrt(xs**2 + ys**2 + zs**2)
     thetas = jnp.nan_to_num(jnp.arccos(zs / radii), nan=0.0, copy=False)
-    #thetas = jnp.arccos(zs / radii)
     phis = jnp.arctan2(ys, xs)
 
-    SH = SH_real(l, m)
+    return thetas, phis, radii
 
-    return SH(thetas, phis)
+
+@partial(jit, static_argnums=(1, 2))
+def SH_real_jit(coords, l, m):
+    """Return SH applied to an array of shape [*, 3], where last three coords are x, y, z.
+
+    Expect this function to be slower than using the more refined expressions using cartesian coordinates directly.
+    """
+
+    thetas, phis, _ = convert_to_spherical_coords(coords)
+
+    #SH = SH_real(l, m)
+    #return SH(thetas, phis)
+    return SH_real_native(l, m, thetas, phis)
+
+
+def SH_real_jit_all(coords, l):
+    """Return all SH applied to an array of shape [*, 3], where last three coords are x, y, z."""
+
+    return jnp.stack([SH_real_jit(coords, l, m) for m in range(-l, l+1)], axis=-1)
+
 
 def SH_real_cart(l, m):
     """Return JAX version of real spherical harmonics in cartesian coordinates Y(x, y, z).
