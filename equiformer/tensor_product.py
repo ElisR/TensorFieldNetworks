@@ -1,10 +1,13 @@
 """Module holding functions for tensor product."""
-from sympy.physics.quantum.cg import CG
+from functools import lru_cache
+
 import jax.numpy as jnp
 import numpy as np
 from einops import einsum
+from sympy.physics.quantum.cg import CG
 
-# TODO Define Clebsch-Gordan coefficients
+
+@lru_cache(maxsize=128)
 def generate_cg_matrices(li: int, lf: int, lo: int):
     """Generate Clebsch-Gordan matrices for given angular momenta.
     
