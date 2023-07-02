@@ -15,31 +15,43 @@ def _scale(l: int) -> Expr:
     """Internal function for scaling factor of spherical harmonics."""
     r = Symbol("r", real=True, positive=True)
 
-    return sympy.sqrt((sympy.Integer(2) * l + 1) / (2 * pi)) * r**(-l)
+    return sympy.sqrt((sympy.Integer(2) * l + 1) / (2 * pi)) * r ** (-l)
 
 
 def _ab(m: int) -> tuple[Expr, Expr]:
     """Internal function for A and B coefficients of spherical harmonics."""
     x, y = Symbol("x", real=True), Symbol("y", real=True)
 
-    power = (x + I * y)**m
+    power = (x + I * y) ** m
     return sympy.re(power), sympy.im(power)
 
 
 def _pi(l: int, m: int) -> Expr:
     """Internal function for Pi coefficient of spherical harmonics.
-    
+
     Args:
         l (int): Order of spherical harmonics.
         m (int): Index of spherical harmonics.
     """
     z, r = Symbol("z", real=True), Symbol("r", real=True, positive=True)
 
-    prefac = sympy.sqrt(factorial(l - m) / factorial(l + m)) * sympy.sqrt(2 - sympy.KroneckerDelta(m, 0)) / sympy.sqrt(2)
+    prefac = (
+        sympy.sqrt(factorial(l - m) / factorial(l + m))
+        * sympy.sqrt(2 - sympy.KroneckerDelta(m, 0))
+        / sympy.sqrt(2)
+    )
 
     summation = 0
     for k in range(0, math.floor((l - m) / 2) + 1):
-        summation += S.NegativeOne**k * sympy.Integer(2)**(-l) * binomial(l, k) * binomial(2 * l - 2 * k, l) * (factorial(l - 2 * k) / factorial(l - 2 * k - m)) * r**(2 * k) * z**(l - 2 * k - m)
+        summation += (
+            S.NegativeOne**k
+            * sympy.Integer(2) ** (-l)
+            * binomial(l, k)
+            * binomial(2 * l - 2 * k, l)
+            * (factorial(l - 2 * k) / factorial(l - 2 * k - m))
+            * r ** (2 * k)
+            * z ** (l - 2 * k - m)
+        )
 
     return prefac * summation
 
@@ -56,7 +68,7 @@ def solid_harmonics(l: int) -> dict[int, Expr]:
 
     for m in range(0, l + 1, 1):
         A, B = _ab(m)
-        pre =  _pi(l, m) * _scale(l)
+        pre = _pi(l, m) * _scale(l)
         y_plus = simplify(pre * A)
         y_minus = simplify(pre * B)
 
@@ -96,7 +108,7 @@ def solid_harmonic_jit(coords: jnp.ndarray, l: int, m: int) -> jnp.ndarray:
 @partial(jit, static_argnums=(1,))
 def solid_harmonics_jit(coords: jnp.ndarray, l: int) -> jnp.ndarray:
     r"""Applying all real spherical harmonics :math:`Y_{\ell m}(x, y, z)` to input.
-    
+
     .. math::
         r^{\ell}\left(\begin{array}{c}Y_{\ell m} \\ Y_{\ell-m}\end{array}\right)
         =\sqrt{\frac{2 \ell+1}{2 \pi}} \bar{\Pi}_{\ell}^m(z)
@@ -121,4 +133,4 @@ def solid_harmonics_jit(coords: jnp.ndarray, l: int) -> jnp.ndarray:
     xs, ys, zs = coords[..., 0], coords[..., 1], coords[..., 2]
     rs = jnp.sqrt(xs**2 + ys**2 + zs**2)
 
-    return jnp.stack([sh_dict[m](xs, ys, zs, rs) for m in range(-l, l+1)], axis=-1)
+    return jnp.stack([sh_dict[m](xs, ys, zs, rs) for m in range(-l, l + 1)], axis=-1)
