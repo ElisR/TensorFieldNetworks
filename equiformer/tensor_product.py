@@ -4,12 +4,12 @@ from itertools import product
 
 import jax.numpy as jnp
 import numpy as np
-from einops import einsum, rearrange
+from einops import einsum, rearrange, repeat
 from sympy.physics.quantum.cg import CG
 
 
 @lru_cache(maxsize=128)
-def generate_cg_matrices(li: int, lf: int, lo: int):
+def generate_cg_matrix(li: int, lf: int, lo: int) -> np.ndarray:
     """Generate Clebsch-Gordan matrices for given angular momenta.
 
     Args:
@@ -42,7 +42,8 @@ def generate_cg_matrices(li: int, lf: int, lo: int):
     # Assert imaginary part is zero
     assert np.allclose(cg_real.imag, np.zeros_like(cg_real.imag))
 
-    return jnp.array(cg_real.real)
+    # NOTE Not returning a JAX array anymore
+    return cg_real.real
 
 
 def basis_rotation(ell: int) -> jnp.ndarray:
@@ -66,8 +67,49 @@ def basis_rotation(ell: int) -> jnp.ndarray:
     # Adding phase that makes CG real
     return jnp.array((-1j) ** ell * A)
 
+# TODO Add a function to generate list[int] of angular momenta multiplicities from e3nn notation
+# e.g. "3x1 + 1x2" -> [0, 3, 1]
 
-def tensor_product(
+def generate_large_cg_matrix(ncs_1: list[int], ncs_2: list[int], lmax: int) -> jnp.ndarray:
+    """Defines larger Clebsch-Gordan matrix for given angular momenta."""
+    # Find the actual maximum angular momentum to calculate
+    true_lmax = min(lmax, len(ncs_1) + len(ncs_2) - 2)
+
+    # Define nested list to hold all blocks
+    # Format needed for np.block
+    cg_mats_all = [[[None] * (true_lmax + 1)] * len(ncs_2)] * len(ncs_1)
+
+    for (l1, nc1), (l2, nc2) in product(enumerate(ncs_1), enumerate(ncs_2)):
+        # Constructing matrix that will match input channels with output
+        match_io = rearrange(np.eye(nc1 * nc2), "(nci ncf) ncif -> nci ncf ncif", nci=nc1, ncf=nc2)
+
+        for l3 in range(0, true_lmax + 1):
+            # CG matrix will be trivially zero if l3 is not in the range
+            # Choosing to calculate them anyway for simplicity
+            cg_mat = generate_cg_matrix(l1, l2, l3)
+
+            # Repeating a cg_mat a number of times for each input channel
+            cg_mat_repeated = repeat(cg_mat, "mi mf mo -> nc1 mi nc2 mf mo", nc1=nc1, nc2=nc2)
+
+            # Perform einsum to properly expand cg_mat_repeated
+            cg_mat_matching = einsum(
+                cg_mat_repeated,
+                match_io,
+                "nc1 mi nc2 mf mo, nc1 nc2 ncif -> nc1 mi nc2 mf ncif mo",
+            )
+            # Reshaping to 3 dimensional matrix
+            cg_mat_slurp = rearrange(cg_mat_matching, "nc1 mi nc2 mf ncif mo -> (nc1 mi) (nc2 mf) (ncif mo)", nc1=nc1, nc2=nc2, ncif=(nc1 * nc2))
+
+            cg_mats_all[l1][l2][l3] = cg_mat_slurp
+
+    # TODO Given that we eventually want it all collapsed into one axis, need to decide on an ordering from (l1, l2, l3) -> index, with the proviso that index_a > index_b if l3_a > l3_b
+
+    # TODO Fix this function - currently giving wrong sizes
+    return jnp.block(cg_mats_all)
+    #return cg_mats_all
+
+
+def tensor_product_singular(
     f: jnp.ndarray,
     g: jnp.ndarray,
     ws: list[jnp.ndarray] | None = None,
@@ -113,51 +155,17 @@ def tensor_product(
     return [rearrange(tp, "... ci cf Mo -> ... (ci cf) Mo") for tp in tps]
 
 
-# Need to decide on how to handle multiple channels
-# I think the channel index should be an extra dimension and tensors should only contain one order of object
-def split_into_orbitals(arr: jnp.ndarray, n_channels: tuple[int]) -> list[jnp.ndarray]:
-    """Split array into orbitals of shape (..., nc, l).
-
-    Will have to use static argnums on second argument if jitting.
+def tensor_product_multiple(
+        f: jnp.ndarray,
+        g: jnp.ndarray,
+        cg: jnp.ndarray,
+        ws: list[jnp.ndarray] | None = None,
+        lmax: int | None = None,
+):
+    """Calculate the weighted tensor product between two vectors of type l1 and l2.
+    
+    f and g are now larger tensors containing multiple channels of different angular momenta.
     """
-    # Multiply n_channels by 2 * l + 1
-    n_channels_multiplicity = tuple((2 * l + 1) * n for l, n in enumerate(n_channels))
-
-    splitted = jnp.split(arr, np.cumsum(n_channels_multiplicity)[:-1], axis=-1)
-    return [rearrange(s, "... (nc ms) -> ... nc ms", nc=nc, ms=2 * l + 1) for s, nc, l in zip(splitted, n_channels, range(len(n_channels)))]
-
-
-def multiple_tensor_product(
-    fs: list[jnp.ndarray], gs: list[jnp.ndarray], l_max: int, wss: list[list[jnp.ndarray]] | None = None
-) -> list[jnp.ndarray]:
-    """Calculate the tensor product between lists of features of different orders.
-
-    All tensors have shape (..., nc, 2l + 1) where nc is the number of channels.
-
-    Args:
-        fs: List of features of different orders.
-        gs: List of filters of different orders.
-        l_max: Maximum angular momentum to include in tensor product.
-
-    Returns:
-        List of tensors containing the tensor product of all features and filters.
-    """
-
-    ncs_f, ncs_g = [f.shape[-2] for f in fs], [g.shape[-2] for g in gs]
-
-    # Perform tensor product between all combinations of features and filters
-    tps = [
-        tensor_product(f, g, lmax=l_max)
-        for f, g in product(fs, gs)
-    ]
-
-    # TODO Have to be careful with which filters get applied to which features.
-
-
-def orchestrate_tensor_product(f: jnp.ndarray, g: jnp.ndarray) -> jnp.ndarray:
-    """Orchestrate tensor product between tensors containing all channels and orders."""
-
-
 
 # Had a separate thought to turn the Clebsch-Gordan matrix into a repeated tensor so that the tensor product could be done in one swoop.
 # This tensor would have quite a few zero elements but maybe would be faster.
