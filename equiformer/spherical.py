@@ -1,8 +1,7 @@
-"""Module for spherical harmonics in JAX."""
+"""Module with custom JAX spherical harmonics implementation, using cartesian coordinates."""
 import math
 from functools import lru_cache, partial
 
-"""Module with custom spherical harmonics implementation, using cartesian coordinates."""
 import jax.numpy as jnp
 import sympy
 from jax import jit
@@ -30,8 +29,8 @@ def _pi(l: int, m: int) -> Expr:
     """Internal function for Pi coefficient of spherical harmonics.
 
     Args:
-        l (int): Order of spherical harmonics.
-        m (int): Index of spherical harmonics.
+        l: Order of spherical harmonics.
+        m: Index of spherical harmonics.
     """
     z, r = Symbol("z", real=True), Symbol("r", real=True, positive=True)
 
@@ -62,7 +61,7 @@ def solid_harmonics(l: int) -> dict[int, Expr]:
     Calculated using SymPy in the backend.
 
     Args:
-        l (int): Maximum degree of spherical harmonics.
+        l: Maximum degree of spherical harmonics.
     """
     SH_dict = {}
 
@@ -82,7 +81,7 @@ def solid_harmonics(l: int) -> dict[int, Expr]:
 
 @lru_cache(maxsize=None)
 def solid_harmonics_jax(l: int) -> dict[int, callable]:
-    """Jaxified version of solid_harmonics."""
+    """Jaxified version of solid_harmonics. Derived from SymPy expression."""
     sh_dict = solid_harmonics(l)
 
     x, y, z = Symbol("x", real=True), Symbol("y", real=True), Symbol("z", real=True)
