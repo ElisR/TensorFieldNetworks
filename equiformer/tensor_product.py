@@ -78,58 +78,6 @@ def _basis_rotation(ell: int) -> jnp.ndarray:
 # e.g. "3x1 + 1x2" -> [0, 3, 1]
 
 
-# NOTE May give up on this approach
-def generate_large_cg_matrix(
-    ncs_1: list[int], ncs_2: list[int], lmax: int
-) -> jnp.ndarray:
-    """Defines larger Clebsch-Gordan matrix for given angular momenta."""
-    # Find the actual maximum angular momentum to calculate
-    true_lmax = min(lmax, len(ncs_1) + len(ncs_2) - 2)
-
-    # Define nested list to hold all blocks
-    # Format needed for np.block
-    cg_mats_all = [[[None] * (true_lmax + 1)] * len(ncs_2)] * len(ncs_1)
-
-    for (l1, nc1), (l2, nc2) in product(enumerate(ncs_1), enumerate(ncs_2)):
-        # Constructing matrix that will match input channels with output
-        match_io = rearrange(
-            np.eye(nc1 * nc2), "(nci ncf) ncif -> nci ncf ncif", nci=nc1, ncf=nc2
-        )
-
-        for l3 in range(0, true_lmax + 1):
-            # CG matrix will be trivially zero if l3 is not in the range
-            # Choosing to calculate them anyway for simplicity
-            cg_mat = generate_cg_matrix(l1, l2, l3)
-
-            # Repeating a cg_mat a number of times for each input channel
-            cg_mat_repeated = repeat(
-                cg_mat, "mi mf mo -> nc1 mi nc2 mf mo", nc1=nc1, nc2=nc2
-            )
-
-            # Perform einsum to properly expand cg_mat_repeated
-            cg_mat_matching = einsum(
-                cg_mat_repeated,
-                match_io,
-                "nc1 mi nc2 mf mo, nc1 nc2 ncif -> nc1 mi nc2 mf ncif mo",
-            )
-            # Reshaping to 3 dimensional matrix
-            cg_mat_slurp = rearrange(
-                cg_mat_matching,
-                "nc1 mi nc2 mf ncif mo -> (nc1 mi) (nc2 mf) (ncif mo)",
-                nc1=nc1,
-                nc2=nc2,
-                ncif=(nc1 * nc2),
-            )
-
-            cg_mats_all[l1][l2][l3] = cg_mat_slurp
-
-    # TODO Given that we eventually want it all collapsed into one axis, need to decide on an ordering from (l1, l2, l3) -> index, with the proviso that index_a > index_b if l3_a > l3_b
-
-    # TODO Fix this function - currently giving wrong sizes
-    return jnp.block(cg_mats_all)
-    # return cg_mats_all
-
-
 def _possible_output(l_i: int, l_f: int, l_max: int | None = None) -> list[int]:
     """Returns a list of the possible angular momenta from tensor product of l_i, l_f."""
     if l_max is None:
@@ -151,8 +99,6 @@ def tensor_product(
     momenta ranging from |l1 - l2| to l1 + l2.
     Vectors assumed to have channel index as penultimate dimension.
     Returns empty arrays for low l < |l1 - l2|.
-
-    TODO Think about turning list of weights into dictionary of weights
 
     Args:
         f: First vector of shape (..., nc1, 2l1 + 1).
@@ -204,58 +150,3 @@ def tensor_product(
     if not depthwise:
         tps = {l: rearrange(tp, "... ci cf Mo -> ... (ci cf) Mo") for l, tp in tps.items()}
     return tps
-
-
-def tensor_product_multiple(
-    f: jnp.ndarray,
-    g: jnp.ndarray,
-    nc_f: tuple[int],
-    nc_g: tuple[int],
-    ws: dict[int, jnp.ndarray] | None = None,
-    lmax: int | None = None,
-) -> tuple[jnp.ndarray, tuple[int]]:
-    """Calculate the weighted tensor product between two vectors of type l1 and l2.
-
-    f and g are now larger tensors containing multiple channels of different angular momenta.
-
-    TODO Find best way to include weights
-    """
-    f_splitted = split_into_orbitals(f, nc_f)
-    g_splitted = split_into_orbitals(g, nc_g)
-
-    combined_product = {}
-    for f_l, g_l in product(f_splitted, g_splitted):
-        tps = tensor_product(f_l, g_l, l_max=lmax)
-
-        for l, feat in tps.items():
-            combined_product.setdefault(l, []).append(feat)
-
-    combined_list = []
-    nc_out = {}
-    for l, feats in combined_product.items():
-        combined = jnp.concatenate(feats, axis=-2)
-        nc_out[l] = combined.shape[-2]  # Noting dimensionality of output
-        combined = rearrange(combined, "... nc ms -> ... (nc ms)", ms=2 * l + 1)
-        combined_list.append(combined)
-
-    n_channels = tuple(nc_out.get(l, 0) for l in range(0, max(combined_product.keys())))
-
-    return jnp.concatenate(combined_list, axis=-1), n_channels
-
-
-def split_into_orbitals(arr: jnp.ndarray, n_channels: tuple[int]) -> list[jnp.ndarray]:
-    """Split array into orbitals of shape (..., nc, l).
-    Will have to use static argnums on second argument if jitting.
-
-    Args:
-        arr: Array of features, where last axis contains different l all concatenated
-        n_channels: Tuple of integers with nc_l, always starting from l=0
-    """
-    # Multiply n_channels by 2 * l + 1
-    n_channels_multiplicity = tuple((2 * l + 1) * n for l, n in enumerate(n_channels))
-
-    splitted = jnp.split(arr, np.cumsum(n_channels_multiplicity)[:-1], axis=-1)
-    return [
-        rearrange(s, "... (nc ms) -> ... nc ms", nc=nc, ms=2 * l + 1)
-        for s, nc, l in zip(splitted, n_channels, range(len(n_channels)))
-    ]
