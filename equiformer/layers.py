@@ -1,6 +1,7 @@
 from jax import vmap
 import jax
 import jax.numpy as jnp
+import jax.random as jr
 import equinox as eqx
 from einops import einsum
 import jraph
@@ -20,16 +21,13 @@ class SphericalFilter(eqx.Module):
 
     coeffs: jnp.ndarray
     centers: jnp.ndarray
-    spread: float
-    l_f: int
+    l_f: int = eqx.field(static=True)
+    n_c: int = eqx.field(static=True)
 
-    n_c: int
-
-    def __init__(self, n_c: int, l_f: int, num_basis: int, max_center: float):
+    def __init__(self, n_c: int, l_f: int, num_basis: int, max_center: float, key: jr.PRNGKey,):
         # Basis for radial basis functions
-        self.coeffs = jnp.ones((n_c, num_basis))
+        self.coeffs = jr.uniform(key, (n_c, num_basis))
         self.centers = jnp.linspace(0, max_center, num=num_basis)
-        self.spread = max_center / num_basis
 
         self.l_f = l_f
         self.n_c = n_c
@@ -38,12 +36,14 @@ class SphericalFilter(eqx.Module):
         """Apply function to edges of graph, containing displacements [..., num_edges, 3]."""
         # Encode angular part
         y = spherical.solid_harmonics_jit(edges, self.l_f)
-        y = jnp.nan_to_num(y, copy=False)
+        y = jnp.nan_to_num(y, copy=False)  # Needed if self-edges added accidentally
+
+        spread = (jnp.max(self.centers) - jnp.min(self.centers)) / len(self.centers)
 
         # Encode radial part and multiply
         radius = jnp.linalg.norm(edges, ord=2, axis=-1)
         rbfs = vmap(
-            lambda c_i: jnp.exp(-self.spread * (radius - c_i) ** 2), out_axes=-1
+            lambda c_i: jnp.exp(- spread * (radius - c_i) ** 2), out_axes=-1
         )(self.centers)
         rbfs = einsum(rbfs, self.coeffs, "... i, c i -> ... c")
         return einsum(rbfs, y, "... c, ... m -> ... c m")
@@ -54,14 +54,17 @@ class TensorProductLayer(eqx.Module):
 
     filters: dict[int, list[SphericalFilter]]
     tp_weights: dict[int, dict[int, dict[int, jnp.ndarray]]]
-    input_channels: dict[int, int]
-    l_max: int | None
+    input_channels: dict[int, int] = eqx.field(static=True)
+    l_max: int | None = eqx.field(static=True)
+
+    # TODO Move CG coefficients into this layer
 
     # Create filters for spherical harmonics
     def __init__(
         self,
         filters: dict[int, list[int]],
         input_channels: dict[int, int],
+        key: jr.PRNGKey,
         l_max: int | None = None,
     ):
         # Create filters
@@ -69,7 +72,8 @@ class TensorProductLayer(eqx.Module):
         for l, l_fs in filters.items():
             for l_f in l_fs:
                 # TODO Change default number of basis functions and spacing
-                f = SphericalFilter(input_channels[l], l_f, 5, 3.5)
+                key, subkey = jr.split(key, num=2)
+                f = SphericalFilter(input_channels[l], l_f, 5, 3.5, subkey)
                 self.filters.setdefault(l, []).append(f)
 
         # Initialise weights for tensor product
@@ -79,14 +83,16 @@ class TensorProductLayer(eqx.Module):
             for l_f in filters[l]:
                 l_os = tensor_product._possible_output(l, l_f, l_max=self.l_max)
                 for l_o in l_os:
+                    key, subkey = jr.split(key, num=2)
                     self.tp_weights.setdefault(l, {}).setdefault(l_f, {})[
                         l_o
-                    ] = jnp.ones((n_c,))
+                    ] = jr.normal(subkey, (n_c,)) + 1.0
 
         self.input_channels = input_channels
 
     def __call__(self, g: jraph.GraphsTuple):
-        sum_n_node = g.nodes[COORDS].shape[-2]
+        # could do jax.tree_util.tree_leaves(g.nodes)[0].shape[0] for more flexibility
+        sum_n_node = g.nodes[COORDS].shape[0]
 
         messages_all = {}
         for l, filters_l in self.filters.items():
@@ -114,7 +120,7 @@ class TensorProductLayer(eqx.Module):
         }
 
         # Initialising with coordinates
-        nodes_new = {-1: g.nodes[-1]}
+        nodes_new = {COORDS: g.nodes[COORDS]}
         # TODO Look into vmap
         for l, messages in messages_all.items():
             # Performing aggregation of messages
@@ -128,18 +134,18 @@ class TensorProductLayer(eqx.Module):
 class SelfInteractionLayer(eqx.Module):
     """Module for applying local self-interaction between features of same order."""
 
-    in_channels: dict[int, int]
-    out_channels: dict[int, int]
+    in_channels: dict[int, int] = eqx.field(static=True)
+    out_channels: dict[int, int] = eqx.field(static=True)
     weights: dict[int, jnp.ndarray]
 
-    def __init__(self, channel_map: dict[int, tuple[int]]):
+    def __init__(self, channel_map: dict[int, tuple[int]], key: jr.PRNGKey):
         """Initialise self-interaction layer with {l: (nc_l_in, nc_l_out), ...}"""
         self.weights = {}
         self.in_channels = {}
         self.out_channels = {}
         for l, (nc_in, nc_out) in channel_map.items():
-            # Identity by default
-            self.weights[l] = jnp.eye(nc_out, nc_in)
+            key, subkey = jr.split(key, num=2)
+            self.weights[l] = jr.normal(subkey, (nc_out, nc_in)) + 1.0
             self.in_channels[l] = nc_in
             self.out_channels[l] = nc_out
 
@@ -157,15 +163,16 @@ class GateLayer(eqx.Module):
     act_fn: callable
     biases: dict[int, jnp.ndarray]
 
-    def __init__(self, n_channels: dict[int, int], act_fn: callable = jax.nn.sigmoid):
+    def __init__(self, n_channels: dict[int, int], key: jr.PRNGKey, act_fn: callable = jax.nn.sigmoid):
         self.act_fn = act_fn
 
         self.biases = {}
         for l, n_c in n_channels.items():
-            self.biases[l] = jnp.zeros((n_c, 1))
+            key, subkey = jr.split(key, num=2)
+            self.biases[l] = jr.normal(subkey, (n_c, 1))
 
     def __call__(self, g: jraph.GraphsTuple):
-        nodes_new = {-1: g.nodes[-1]}
+        nodes_new = {COORDS: g.nodes[COORDS]}
 
         for l, bias in self.biases.items():
             nodes_l = g.nodes[l]
