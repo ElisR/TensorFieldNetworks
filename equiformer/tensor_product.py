@@ -1,15 +1,11 @@
 """Module holding functions for tensor product."""
-from functools import lru_cache
-from itertools import product
-
 import jax.numpy as jnp
 import numpy as np
-from einops import einsum, rearrange, repeat
+from einops import einsum, rearrange
 from sympy.physics.quantum.cg import CG
 
 
-@lru_cache(maxsize=128)
-def generate_cg_matrix(l_i: int, l_f: int, l_o: int) -> np.ndarray:
+def generate_cg_matrix(l_i: int, l_f: int, l_o: int) -> jnp.ndarray:
     """Generate SO(3) Clebsch-Gordan matrix for given triplet of angular momenta.
 
     NOTE This is a linear transformation of the SU(2) Clebsch-Gordan matrix.
@@ -42,11 +38,9 @@ def generate_cg_matrix(l_i: int, l_f: int, l_o: int) -> np.ndarray:
         "mi mf mo, Mi mi, Mf mf, Mo mo -> Mi Mf Mo",
     )
 
-    # Assert imaginary part is zero
+    # Cast to real part
     assert np.allclose(cg_real.imag, np.zeros_like(cg_real.imag))
-
-    # NOTE Not returning a JAX array anymore
-    return cg_real.real
+    return jnp.array(cg_real.real)
 
 
 def _basis_rotation(ell: int) -> jnp.ndarray:
@@ -71,7 +65,7 @@ def _basis_rotation(ell: int) -> jnp.ndarray:
             A[ind(m), ind(m)] = 1
 
     # Adding phase that makes CG real
-    return jnp.array((-1j) ** ell * A)
+    return (-1j) ** ell * A
 
 
 # TODO Add a function to generate list[int] of angular momenta multiplicities from e3nn notation
@@ -129,7 +123,7 @@ def tensor_product(
         _ = [ws.setdefault(l3, jnp.ones((nc1,))) for l3 in l3s]
 
     # All Clebsch-Gordan matrices
-    cg_mats = {l3: jnp.array(generate_cg_matrix(l1, l2, l3)) for l3 in l3s}
+    cg_mats = {l3: generate_cg_matrix(l1, l2, l3) for l3 in l3s}
 
     # Calculate tensor product as linear combination including weights
     weighted_prod = (
