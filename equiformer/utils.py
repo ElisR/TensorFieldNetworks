@@ -18,12 +18,3 @@ def generate_rand_features(n_channels: dict[int, int], key: jr.PRNGKey, nodes: i
         A JAX array representing the random feature matrix.
     """
     return {l: jr.uniform(key, (nodes, n, 2 * l + 1)) for l, n in n_channels.items()}
-
-
-# TODO Remove this function
-def infer_size(n_channels: tuple[int]) -> int:
-    """Returns the size of the feature vector."""
-    size = 0
-    for l, n in enumerate(n_channels):
-        size += (2 * l + 1) * n
-    return size
