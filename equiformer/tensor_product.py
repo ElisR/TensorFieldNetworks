@@ -84,7 +84,7 @@ def tensor_product(
     g: jnp.ndarray,
     ws: dict[int, jnp.ndarray] | None = None,
     l_max: int | None = None,
-    depthwise: bool = False,
+    elementwise: bool = False,
 ) -> dict[int, jnp.ndarray]:
     """Calculate the weighted tensor product between two vectors of type l1 and l2.
 
@@ -108,7 +108,7 @@ def tensor_product(
     # Allow for multiple channels
     nc1, nc2 = f.shape[-2], g.shape[-2]
 
-    if depthwise:
+    if not elementwise:
         assert nc1 == nc2
 
     # Possible output angular momenta
@@ -117,7 +117,7 @@ def tensor_product(
     # If no weights are given, use ones
     if ws is None:
         ws = {}
-    if not depthwise:
+    if elementwise:
         _ = [ws.setdefault(l3, jnp.ones((nc1, nc2))) for l3 in l3s]
     else:
         _ = [ws.setdefault(l3, jnp.ones((nc1,))) for l3 in l3s]
@@ -128,7 +128,7 @@ def tensor_product(
     # Calculate tensor product as linear combination including weights
     weighted_prod = (
         "Mi Mf Mo, ... ci Mi, ... cf Mf, ci cf -> ... ci cf Mo"
-        if not depthwise
+        if elementwise
         else "Mi Mf Mo, ... c Mi, ... c Mf, c -> ... c Mo"
     )
     tps = {
@@ -141,6 +141,6 @@ def tensor_product(
         )
         for l in l3s
     }
-    if not depthwise:
+    if elementwise:
         tps = {l: rearrange(tp, "... ci cf Mo -> ... (ci cf) Mo") for l, tp in tps.items()}
     return tps

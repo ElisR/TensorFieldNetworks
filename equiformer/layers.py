@@ -35,6 +35,8 @@ class SphericalFilter(eqx.Module):
     def __call__(self, edges: jnp.ndarray):
         """Apply function to edges of graph, containing displacements [..., num_edges, 3]."""
         # Encode angular part
+        # NOTE Wasteful to be recomputing spherical harmonics many times
+        # Could easily move these to edge definition themselves
         y = spherical.solid_harmonics_jit(edges, self.l_f)
         y = jnp.nan_to_num(y, copy=False)  # Needed if self-edges added accidentally
 
@@ -49,15 +51,15 @@ class SphericalFilter(eqx.Module):
         return einsum(rbfs, y, "... c, ... m -> ... c m")
 
 
-class TensorProductLayer(eqx.Module):
+class TFNLayer(eqx.Module):
     """Module for applying tensor product to graph."""
 
     filters: dict[int, list[SphericalFilter]]
-    tp_weights: dict[int, dict[int, dict[int, jnp.ndarray]]]
     input_channels: dict[int, int] = eqx.field(static=True)
     l_max: int | None = eqx.field(static=True)
 
     # TODO Move CG coefficients into this layer
+    # TODO Add pointwise skip weights
 
     # Create filters for spherical harmonics
     def __init__(
@@ -69,51 +71,36 @@ class TensorProductLayer(eqx.Module):
     ):
         # Create filters
         self.filters = {}
-        for l, l_fs in filters.items():
+        for l_i, l_fs in filters.items():
             for l_f in l_fs:
                 # TODO Change default number of basis functions and spacing
                 key, subkey = jr.split(key, num=2)
-                f = SphericalFilter(input_channels[l], l_f, 5, 3.5, subkey)
-                self.filters.setdefault(l, []).append(f)
+                f = SphericalFilter(input_channels[l_i], l_f, 5, 3.5, subkey)
+                self.filters.setdefault(l_i, []).append(f)
 
-        # Initialise weights for tensor product
         self.l_max = l_max
-        self.tp_weights = {}
-        for l, n_c in input_channels.items():
-            for l_f in filters[l]:
-                l_os = tensor_product._possible_output(l, l_f, l_max=self.l_max)
-                for l_o in l_os:
-                    key, subkey = jr.split(key, num=2)
-                    self.tp_weights.setdefault(l, {}).setdefault(l_f, {})[
-                        l_o
-                    ] = jr.normal(subkey, (n_c,)) + 1.0
-
         self.input_channels = input_channels
 
     def __call__(self, g: jraph.GraphsTuple):
-        # could do jax.tree_util.tree_leaves(g.nodes)[0].shape[0] for more flexibility
         sum_n_node = g.nodes[COORDS].shape[0]
 
         messages_all = {}
-        for l, filters_l in self.filters.items():
-            for filter in filters_l:
-                # NOTE Be careful there are no self-edges
-                edges_l = filter(g.edges)
+        for l_i, filters_l_i in self.filters.items():
+            for sph_filter in filters_l_i:
+                edges_l = sph_filter(g.edges)
 
-                # Nodes should have shape [..., node, channel, m]
-                nodes_relevant = g.nodes[l][..., g.senders, :, :]
+                # Nodes should have shape [node, channel, m]
+                nodes_senders = g.nodes[l_i][g.senders, :, :]
                 messages = tensor_product.tensor_product(
-                    nodes_relevant,
+                    nodes_senders,
                     edges_l,
-                    self.tp_weights[l][filter.l_f],
                     l_max=self.l_max,
-                    depthwise=True,
+                    elementwise=False,
                 )
                 for l_o, messages_l_o in messages.items():
                     messages_all.setdefault(l_o, []).append(messages_l_o)
 
         # Combine all channels
-        # TODO Look into vmap
         messages_all = {
             l_o: jnp.concatenate(messages_l_o, axis=-2)
             for l_o, messages_l_o in messages_all.items()
@@ -121,14 +108,15 @@ class TensorProductLayer(eqx.Module):
 
         # Initialising with coordinates
         nodes_new = {COORDS: g.nodes[COORDS]}
-        # TODO Look into vmap
-        for l, messages in messages_all.items():
+        for l_i, messages in messages_all.items():
             # Performing aggregation of messages
-            nodes_new[l] = jax.ops.segment_sum(
+            nodes_new[l_i] = jax.ops.segment_sum(
                 messages, g.receivers, num_segments=sum_n_node
             )
 
         return g._replace(nodes=nodes_new)
+
+
 
 
 class SelfInteractionLayer(eqx.Module):

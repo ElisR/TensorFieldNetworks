@@ -77,13 +77,13 @@ class ShapeClassifier(eqx.Module):
 
         self.nn_layers = [
             layers.SelfInteractionLayer({0: (1, 4)}, keys[0]),
-            layers.TensorProductLayer({0: [0, 1]}, {0: 4}, keys[1]),
+            layers.TFNLayer({0: [0, 1]}, {0: 4}, keys[1]),
             layers.SelfInteractionLayer({0: (4, 4), 1: (4, 4)}, keys[2]),
             layers.GateLayer({0: 4, 1: 4}, keys[3]),
-            layers.TensorProductLayer({0: [0, 1], 1: [0, 1]}, {0: 4, 1: 4}, keys[4], l_max=1),
+            layers.TFNLayer({0: [0, 1], 1: [0, 1]}, {0: 4, 1: 4}, keys[4], l_max=1),
             layers.SelfInteractionLayer({0: (8, 4), 1: (12, 4)}, keys[5]),
             layers.GateLayer({0: 4, 1: 4}, keys[6]),
-            layers.TensorProductLayer({0: [0], 1: [1]}, {0: 4, 1: 4}, keys[7], l_max=0),
+            layers.TFNLayer({0: [0], 1: [1]}, {0: 4, 1: 4}, keys[7], l_max=0),
             layers.SelfInteractionLayer({0: (8, 4)}, keys[8]),
             layers.GateLayer({0: 4}, keys[9]),
             pool_batched,
@@ -134,7 +134,7 @@ def main():
         progress_bar.set_description(f"Loss: {epoch_loss:.4f}")
 
     # Test model accuracy and equivariance by creating rotated version of dataset
-    rotated_dataset = TetrisDataset(rotate_seed = 4)
+    rotated_dataset = TetrisDataset(rotate_seed=4)
 
     def single_label(model, g) -> int:
         probs = jax.nn.softmax(model(g))
@@ -144,8 +144,8 @@ def main():
         y_pred_rot, probs_rot = single_label(model, g_rot)
         y_pred, probs = single_label(model, g)
 
-        print(y_pred_rot, "vs", y_pred, "vs truth which is", y_rot, "=", y)
-        print("max p diff", jnp.max(jnp.abs(probs - probs_rot)))
+        print(y_pred_rot, "vs", y_pred, "vs truth which is", y_rot, "=", y, end="; ")
+        print("max(Δp) =", jnp.max(jnp.abs(probs - probs_rot)))
 
 
 if __name__ == "__main__":
