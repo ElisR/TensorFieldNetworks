@@ -8,10 +8,11 @@ import equiformer.graphs as graphs
 
 @pytest.mark.parametrize("n_c,l_f", [(4, 1), (4, 2)])
 def test_spherical_filter(n_c: int, l_f: int):
-    spherical_layer = layers.SphericalFilter(n_c, l_f, num_basis=5, max_center=3.5)
+    key = jr.PRNGKey(42)
+    sph_key, coords_key = jr.split(key)
+    spherical_layer = layers.SphericalFilter(n_c, l_f, num_basis=5, max_center=3.5, key=sph_key)
 
-    key = jr.PRNGKey(0)
-    coords = jr.normal(key, shape=(100, 3))
+    coords = jr.normal(coords_key, shape=(100, 3))
     encoded = spherical_layer(coords)
 
     assert encoded.shape == (coords.shape[0], n_c, 2 * l_f + 1)
@@ -30,11 +31,14 @@ def test_tensor_product_layer(
     n_edges: int,
     expected_shapes: dict[int, tuple[int]],
 ):
-    g = graphs.create_rand_graph(n_nodes, n_edges, n_channels, jr.PRNGKey(0))
+    key = jr.PRNGKey(0)
+    g_key, tp_key = jr.split(key)
+    g = graphs.create_rand_graph(n_nodes, n_edges, n_channels, g_key)
 
-    tp_layer = layers.TensorProductLayer(filters, n_channels)
+    assert g.nodes[-1].shape[0] == n_nodes
 
+    tp_layer = layers.TFNLayer(filters, n_channels, tp_key)
     g_out = tp_layer(g)
 
-    for l, expected_shape in expected_shapes.items():
-        assert g_out.nodes[l].shape == expected_shape
+    for l_o, expected_shape in expected_shapes.items():
+        assert g_out.nodes[l_o].shape == expected_shape
