@@ -60,10 +60,10 @@ You may have noticed from the definitions above that if you have a representatio
 For example, the representation
 
 $$
-\rho_{1+2}(g) \equiv \begin{bmatrix}\rho_1(g) & 0 \\0 & \rho_2(g) \\\end{bmatrix}
+\rho\_{1+2}(g) \equiv \begin{bmatrix}\rho\_1(g) & 0 \\0 & \rho\_2(g) \\\end{bmatrix}
 $$
 
-will satisfy the right group relations, provided $\rho_1$ and $\rho_2$ are valid representations, since the blocks never interact during matrix multiplication.
+will satisfy the right group relations, provided $\rho\_1$ and $\rho\_2$ are valid representations, since the blocks never interact during matrix multiplication.
 Furthermore, we can get more valid representations by doing a similarity transformation (change of basis) such as $\rho(g) \to \tilde{\rho}(g)=u \rho(g)u^{-1}$, which is still a homomorphism since $\tilde{\rho}(a)\tilde{\rho}(b)=u \rho(a)u^{-1}u\rho(b)u^{-1}=u\rho(a)\rho(b)u^{-1} = \tilde{\rho}(c)$ as required.
 Hence there are plenty of ways to construct representations for free (i.e. without having to do pen and paper matrix multiplication) using the same starting representation.
 This is why we distinguish between so-called “reducible” representations and “irreducible” representations (”irreps” for cool kids).
@@ -83,51 +83,51 @@ However, we will now see that this is not the only possible representation of th
 We know that we can represent an anti-clockwise rotation about the $z$-axis through angle $\theta$ by the block-diagonal matrix
 
 $$
-\boldsymbol{R}_z(\theta) =\left(\begin{array}{ccc}\cos \theta & -\sin \theta & 0 \\\sin \theta & \cos \theta & 0 \\0 & 0 & 1\end{array}\right),
+\boldsymbol{R}\_z(\theta) =\left(\begin{array}{ccc}\cos \theta & -\sin \theta & 0 \\\sin \theta & \cos \theta & 0 \\0 & 0 & 1\end{array}\right),
 $$
 
 and likewise for the $x$ and $y$ axes by cyclic permutation of rows and columns.
 We have chosen a basis such that this acts appropriately on familiar 3D vectors and their $x$, $y$ and $z$ coordinates.
-We say that this base space is $\mathbb{R}^3$, and these matrices above represent the *group action* on this base space of positions $\mathbf{r} = (r_x, r_y, r_z)^T$.
+We say that this base space is $\mathbb{R}^3$, and these matrices above represent the *group action* on this base space of positions $\mathbf{r} = (r\_x, r\_y, r\_z)^T$.
 
 One can verify that in fact all rotations about $x$, $y$ and $z$ can be generated through
 
 $$
-\boldsymbol{R}_i(\theta) = e^{\theta \boldsymbol{L}_i}, \qquad \text{where} \qquad e^{\boldsymbol{A}}=\sum_{k=0}^{\infty} \frac{1}{k !} \boldsymbol{A}^k=\boldsymbol{1} +\boldsymbol{A}+\frac{1}{2} \boldsymbol{A}^2+\cdots
+\boldsymbol{R}\_i(\theta) = e^{\theta \boldsymbol{L}\_i}, \qquad \text{where} \qquad e^{\boldsymbol{A}}=\sum\_{k=0}^{\infty} \frac{1}{k !} \boldsymbol{A}^k=\boldsymbol{1} +\boldsymbol{A}+\frac{1}{2} \boldsymbol{A}^2+\cdots
 $$
 
 $$
-\quad L_x = \left( \begin{array}{ccc}0 & 0 & 0 \\0 & 0 & -1 \\0 & 1 & 0\end{array} \right), \quad L_y = \left( \begin{array}{ccc}0 & 0 & 1 \\0 & 0 & 0 \\-1 & 0 & 0\end{array} \right), \quad L_z = \left( \begin{array}{ccc}0 & -1 & 0 \\1 & 0 & 0 \\0 & 0 & 0\end{array} \right)
+\quad L\_x = \left( \begin{array}{ccc}0 & 0 & 0 \\0 & 0 & -1 \\0 & 1 & 0\end{array} \right), \quad L\_y = \left( \begin{array}{ccc}0 & 0 & 1 \\0 & 0 & 0 \\-1 & 0 & 0\end{array} \right), \quad L\_z = \left( \begin{array}{ccc}0 & -1 & 0 \\1 & 0 & 0 \\0 & 0 & 0\end{array} \right)
 $$
 
-Notice also that these matrices are all antisymmetric, $L_i = - L_i^T$.
-(As expected given that $\boldsymbol{R}_i(\theta) = e^{\theta \boldsymbol{L}_i}$ must be an orthogonal matrix since $(e^{\theta \boldsymbol{L}_i})^T=e^{-\theta \boldsymbol{L}_i}$ and hence $\boldsymbol{R}^T_i(\theta) \boldsymbol{R}_i(\theta) = e^{\mathbf{0}} = \mathbf{1}$.)
-These $L_i$ are the *generators* of infinitesimal rotations.
+Notice also that these matrices are all antisymmetric, $L\_i = - L\_i^T$.
+(As expected given that $\boldsymbol{R}\_i(\theta) = e^{\theta \boldsymbol{L}\_i}$ must be an orthogonal matrix since $(e^{\theta \boldsymbol{L}\_i})^T=e^{-\theta \boldsymbol{L}\_i}$ and hence $\boldsymbol{R}^T\_i(\theta) \boldsymbol{R}\_i(\theta) = e^{\mathbf{0}} = \mathbf{1}$.)
+These $L\_i$ are the *generators* of infinitesimal rotations.
 Big rotations are composed of many infinitesimal rotations, so between them they generate all rotations.
 
 Now for the cool bit, where we make the jump from mundane $3 \times 3$ rotation matrices.
-Since we expanded $\boldsymbol{R}_i(\theta) = e^{\theta \boldsymbol{L}_i} = \boldsymbol{1} +\theta \boldsymbol{L}_i+\frac{1}{2} \theta^2 \boldsymbol{L}_i^2+\cdots$, it’s obvious that all that can matter in the group multiplication rules of $R_x(\alpha)$, $R_y(\beta)$, $R_z(\gamma)$ is that the algebraic relations of the matrices $\boldsymbol{L}_i$.
+Since we expanded $\boldsymbol{R}\_i(\theta) = e^{\theta \boldsymbol{L}\_i} = \boldsymbol{1} +\theta \boldsymbol{L}\_i+\frac{1}{2} \theta^2 \boldsymbol{L}\_i^2+\cdots$, it’s obvious that all that can matter in the group multiplication rules of $R\_x(\alpha)$, $R\_y(\beta)$, $R\_z(\gamma)$ is that the algebraic relations of the matrices $\boldsymbol{L}\_i$.
 The algebra of the generators above is fully specified by the commutation relations
 
 $$
-L_x L_y - L_y L_x = L_z, \qquad L_y L_z - L_z L_y = L_x, \qquad L_z L_x - L_x L_z = L_y.
+L\_x L\_y - L\_y L\_x = L\_z, \qquad L\_y L\_z - L\_z L\_y = L\_x, \qquad L\_z L\_x - L\_x L\_z = L\_y.
 $$
 
 Hence, if I have some other set of three larger matrices that also satisfy such commutation relations, they must also be generators in some larger representation!
 (A proper derivation of why this is necessary might rely on some [less obvious](https://en.wikipedia.org/wiki/Baker%E2%80%93Campbell%E2%80%93Hausdorff_formula) lemmas, but this motivates why such commutation relations would be sufficient to create a new representation.)
 
-(One can also verify that the operator $L^2 = L_x^2 + L_y^2 + L_z^2$ consequently commutes with all the generators $L_i$.)
+(One can also verify that the operator $L^2 = L\_x^2 + L\_y^2 + L\_z^2$ consequently commutes with all the generators $L\_i$.)
 
-Funnily enough, these commutation relations can be satisfied by matrices of many shapes, not just $3 \times 3$, while still generating fresh new classes of irreps for $SO(3)$! For example, one can trivially set $L_x = L_y = L_z = (0)$, so that all rotation matrices are trivial $1 \times 1$ matrices $\boldsymbol{R}_i(\theta) = (1)$.
+Funnily enough, these commutation relations can be satisfied by matrices of many shapes, not just $3 \times 3$, while still generating fresh new classes of irreps for $SO(3)$! For example, one can trivially set $L\_x = L\_y = L\_z = (0)$, so that all rotation matrices are trivial $1 \times 1$ matrices $\boldsymbol{R}\_i(\theta) = (1)$.
 This is the representation that is relevant for scalars, in fact, which are invariant under rotation.
 Taking it even further, there are compatible $5 \times 5$, $7 \times 7$ and $(2\ell + 1) \times (2 \ell + 1)$ irreducible representations for $\ell \in \mathbb{N}$.
 The natural number $\ell$ that indexes the size of the irreducible representation is called the “angular momentum” (motivated for physical reasons).
 
 So far, we have only discussed rotations about the Cartesian axes, rather than a generic axis.
-One way to rotate around a generic axis $\boldsymbol{\omega} = [\omega_x, \omega_y, \omega_z]$ is $\boldsymbol{R}(\boldsymbol{\omega}) = \exp(\omega_x L_x + \omega_y L_y + \omega_z L_z)$, but another way to represent a rotation is with three three so-called “Euler angles” $\alpha, \beta, \gamma$:
+One way to rotate around a generic axis $\boldsymbol{\omega} = [\omega\_x, \omega\_y, \omega\_z]$ is $\boldsymbol{R}(\boldsymbol{\omega}) = \exp(\omega\_x L\_x + \omega\_y L\_y + \omega\_z L\_z)$, but another way to represent a rotation is with three three so-called “Euler angles” $\alpha, \beta, \gamma$:
 
 $$
-R(\alpha, \beta, \gamma) = e^{\alpha L_z} e^{\beta L_y} e^{\gamma L_z}.
+R(\alpha, \beta, \gamma) = e^{\alpha L\_z} e^{\beta L\_y} e^{\gamma L\_z}.
 $$
 
 ## ❓ How do Spherical Harmonics come in?
@@ -138,25 +138,25 @@ It is more convenient, however, to choose a single rotation axis as a reference.
 We choose this to be the $z$ axis (but this choice is just a convention - the [e3nn](https://e3nn.org/) library chooses $y$, for example).
 
 How do we make the $z$ axis special, you ask?
-Well, after selecting the angular momentum $\ell$ (read: size) of our representation, we express rotation matrices in the eigenbasis of the $L_z$ operator.
-That is, we define $2\ell + 1$ basis states $\boldsymbol{Y}^{\ell}_m(\mathbf{r})$ for $m \in \{ -\ell, -\ell + 1, \ldots , \ell -1, \ell\}$ to be given by
+Well, after selecting the angular momentum $\ell$ (read: size) of our representation, we express rotation matrices in the eigenbasis of the $L\_z$ operator.
+That is, we define $2\ell + 1$ basis states $\boldsymbol{Y}^{\ell}\_m(\mathbf{r})$ for $m \in \{ -\ell, -\ell + 1, \ldots , \ell -1, \ell\}$ to be given by
 
 $$
-\boldsymbol{L}_z \boldsymbol{Y}^{\ell}_m(\mathbf{r}) = -i m \boldsymbol{Y}^{\ell}_m(\mathbf{r}).
+\boldsymbol{L}\_z \boldsymbol{Y}^{\ell}\_m(\mathbf{r}) = -i m \boldsymbol{Y}^{\ell}\_m(\mathbf{r}).
 $$
 
 Note that $\boldsymbol{Y}^{\ell}(\mathbf{r}): \mathbb{R}^{3} \mapsto \mathbb{R}^{2\ell + 1}$ is a function that takes in a point in 3D and outputs a single-column-array with $2\ell + 1$ elements.
-Most of the functional form of $\boldsymbol{Y}^{\ell}_m(\mathbf{r})$ is still left undetermined by this equation, because $\boldsymbol{L}_z$ will just be a constant matrix, which we are trying to choose a basis for.
-The basis for $\boldsymbol{L}_z$ gets fixed when we request the natural ordering of components to be
+Most of the functional form of $\boldsymbol{Y}^{\ell}\_m(\mathbf{r})$ is still left undetermined by this equation, because $\boldsymbol{L}\_z$ will just be a constant matrix, which we are trying to choose a basis for.
+The basis for $\boldsymbol{L}\_z$ gets fixed when we request the natural ordering of components to be
 
 $$
-\boldsymbol{Y}_{1}^{1}(\mathbf{r})=
-\begin{bmatrix} 0 \\ 0 \\ Y_1^1(\mathbf{r})
+\boldsymbol{Y}\_{1}^{1}(\mathbf{r})=
+\begin{bmatrix} 0 \\ 0 \\ Y\_1^1(\mathbf{r})
 \end{bmatrix}, \quad
-\boldsymbol{Y}_{0}^{1}(\mathbf{r})=
-\begin{bmatrix} 0 \\ Y_0^1(\mathbf{r}) \\ 0
+\boldsymbol{Y}\_{0}^{1}(\mathbf{r})=
+\begin{bmatrix} 0 \\ Y\_0^1(\mathbf{r}) \\ 0
 \end{bmatrix}, \quad
-\boldsymbol{Y}_{-1}^{1}(\mathbf{r}) = \begin{bmatrix} Y^1_{-1}(\mathbf{r}) \\ 0 \\ 0
+\boldsymbol{Y}\_{-1}^{1}(\mathbf{r}) = \begin{bmatrix} Y^1\_{-1}(\mathbf{r}) \\ 0 \\ 0
 \end{bmatrix}.
 $$
 
@@ -207,10 +207,10 @@ However, unlike $\cos$ and $\sin$, spherical harmonics get much wackier! Below i
 [Here](https://elisr-spherical-harmonics-visualisation.hf.space/), we plot a surface with its spherical polar coordinates satisfying
 
 $$
-r(\phi, \theta) \propto | \Re [Y_{\ell m}(\phi, \theta)] |,
+r(\phi, \theta) \propto | \Re [Y\_{\ell m}(\phi, \theta)] |,
 $$
 
-and the colour of the surface gives the sign of $\Re [Y_{\ell m}(\phi, \theta)]$, where I denote by $Y_{\ell m}(\phi, \theta)$ the complex spherical harmonics (more commonly found online).
+and the colour of the surface gives the sign of $\Re [Y\_{\ell m}(\phi, \theta)]$, where I denote by $Y\_{\ell m}(\phi, \theta)$ the complex spherical harmonics (more commonly found online).
 
 (**Note**, the real “real spherical harmonics” are not simply the real components of the complex spherical harmonics, but I was originally lazy when making the Gradio demo below, and things broke when I updated them to the real [real spherical harmonics](https://en.wikipedia.org/wiki/Spherical_harmonics).
 The shapes look pretty similar in any case.)
@@ -240,13 +240,13 @@ This inspired many other works, arguably the second most famous example being [S
 
 ## 🔑 Major Key: Tensor Product of Representations
 
-I previously introduced some easy ways to make reducible representations from irreducible ones: taking the Kronecker sum (i.e. putting things on the block diagonal) like $\rho_1(g) \oplus \rho_2(g)$.
+I previously introduced some easy ways to make reducible representations from irreducible ones: taking the Kronecker sum (i.e. putting things on the block diagonal) like $\rho\_1(g) \oplus \rho\_2(g)$.
 
-We can also take the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker_product) of two representations, like $\rho_1(g) \otimes \rho_2(g)$, which acts on a larger space, the tensor product of the two underlying vector spaces.
+We can also take the [Kronecker product](https://en.wikipedia.org/wiki/Kronecker\_product) of two representations, like $\rho\_1(g) \otimes \rho\_2(g)$, which acts on a larger space, the tensor product of the two underlying vector spaces.
 The homomorphism relations are again satisfied since the matrix multiplications happen independently (according to the mixed-product property):
 
 $$
-[\rho_1(a) \otimes \rho_2(a)][\rho_1(b) \otimes \rho_2(b)] = [\rho_1(a) \rho_1(b)] \otimes [\rho_2(a)\rho_2(b)] =\rho_1(c) \otimes \rho_2(c).
+[\rho\_1(a) \otimes \rho\_2(a)][\rho\_1(b) \otimes \rho\_2(b)] = [\rho\_1(a) \rho\_1(b)] \otimes [\rho\_2(a)\rho\_2(b)] =\rho\_1(c) \otimes \rho\_2(c).
 $$
 
 ### 💬 Footnote: Kronecker product example
@@ -259,40 +259,40 @@ This resulting representation will either be reducible or irreducible.
 Without loss of generality we can say that
 
 $$
-\rho_1(g) \otimes \rho_2(g)=Q^{-1} \left[ \bigoplus_{i} \rho_{r_i}(g) \right] Q,
+\rho\_1(g) \otimes \rho\_2(g)=Q^{-1} \left[ \bigoplus\_{i} \rho\_{r\_i}(g) \right] Q,
 $$
 
-where $r_i$ labels a type of irrep on the diagonal.
+where $r\_i$ labels a type of irrep on the diagonal.
 
 ## 🗝️ Still Kinda Major but Slightly More Boring Key: Clebsch-Gordan Coefficients
 
-We can of course take the $\rho_i(g)$ above to be representations of $SO(3)$, the Wigner $\mathbf{D}^{\ell}(R)$ matrices and work things out from there, but motivated by Tensor Field Networks, let’s instead consider the tensor product of the basis vectors, the spherical harmonics.
+We can of course take the $\rho\_i(g)$ above to be representations of $SO(3)$, the Wigner $\mathbf{D}^{\ell}(R)$ matrices and work things out from there, but motivated by Tensor Field Networks, let’s instead consider the tensor product of the basis vectors, the spherical harmonics.
 
 Let’s take
 
 $$
-\boldsymbol{Y}^{\ell_i}_{m_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell_f}_{m_f}(\mathbf{r}).
+\boldsymbol{Y}^{\ell\_i}\_{m\_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell\_f}\_{m\_f}(\mathbf{r}).
 $$
 
-I have claimed that this will be the Kronecker sum of some spherical harmonics multiplied by a matrix $Q$, but which spherical harmonics precisely? We know for certain that the result must be an eigenstate of $\boldsymbol{L}_z \otimes \mathbf{1} + \mathbf{1} \otimes \boldsymbol{L}_z$ because of distributivity:
+I have claimed that this will be the Kronecker sum of some spherical harmonics multiplied by a matrix $Q$, but which spherical harmonics precisely? We know for certain that the result must be an eigenstate of $\boldsymbol{L}\_z \otimes \mathbf{1} + \mathbf{1} \otimes \boldsymbol{L}\_z$ because of distributivity:
 
 $$
-[\boldsymbol{L}_z \otimes \mathbf{1} + \mathbf{1} \otimes \boldsymbol{L}_z] \boldsymbol{Y}^{\ell_i}_{m_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell_f}_{m_f}(\mathbf{r}) = -i(m_i + m_f) \boldsymbol{Y}^{\ell_i}_{m_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell_f}_{m_f}.
+[\boldsymbol{L}\_z \otimes \mathbf{1} + \mathbf{1} \otimes \boldsymbol{L}\_z] \boldsymbol{Y}^{\ell\_i}\_{m\_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell\_f}\_{m\_f}(\mathbf{r}) = -i(m\_i + m\_f) \boldsymbol{Y}^{\ell\_i}\_{m\_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell\_f}\_{m\_f}.
 $$
 
-Letting $m_o = m_i + m_f$, we see that the maximum this can be is $m_o = \ell_i + \ell_f$, which will happen once (for $m_i = \ell_i$, $m_f = \ell_f$).
-The second biggest value it can be is $m_o = \ell_i + \ell_f - 1$, which will happen twice (for $m_i = \ell_i$, $m_f = \ell_f -1$ and for $m_i = \ell_i - 1$, $m_f = \ell_f$).
-We can continue this pattern on until $m_o = 0$, which happens $\min(\ell_i,\ell_f)$ times because we always need $m_i = -m_f$.
-Recalling that for angular momentum $\ell_o$ we had $m_o \in \{ -\ell_o, -\ell_o + 1, \ldots, \ell_o - 1, \ell_o\}$, we see that we have a maximum of $\ell_o = \ell_i + \ell_f$, and we run out of zeroes by the time we get down to $\ell_o = |\ell_i - \ell_f|$, which is our minimum output angular momentum.
+Letting $m\_o = m\_i + m\_f$, we see that the maximum this can be is $m\_o = \ell\_i + \ell\_f$, which will happen once (for $m\_i = \ell\_i$, $m\_f = \ell\_f$).
+The second biggest value it can be is $m\_o = \ell\_i + \ell\_f - 1$, which will happen twice (for $m\_i = \ell\_i$, $m\_f = \ell\_f -1$ and for $m\_i = \ell\_i - 1$, $m\_f = \ell\_f$).
+We can continue this pattern on until $m\_o = 0$, which happens $\min(\ell\_i,\ell\_f)$ times because we always need $m\_i = -m\_f$.
+Recalling that for angular momentum $\ell\_o$ we had $m\_o \in \{ -\ell\_o, -\ell\_o + 1, \ldots, \ell\_o - 1, \ell\_o\}$, we see that we have a maximum of $\ell\_o = \ell\_i + \ell\_f$, and we run out of zeroes by the time we get down to $\ell\_o = |\ell\_i - \ell\_f|$, which is our minimum output angular momentum.
 
-That paragraph was rather unfortunate, but the mnemonic is easy: $|\ell_i - \ell_f| \leq \ell_o \leq \ell_i + \ell_f$, like the triangle inequality of placing two vectors of length $\ell_i$ and $\ell_f$ tip to tail.
+That paragraph was rather unfortunate, but the mnemonic is easy: $|\ell\_i - \ell\_f| \leq \ell\_o \leq \ell\_i + \ell\_f$, like the triangle inequality of placing two vectors of length $\ell\_i$ and $\ell\_f$ tip to tail.
 Hence we have 
 
 $$
-\boldsymbol{Y}^{\ell_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell_f}(\mathbf{r}) = \boldsymbol{C}^{-1} \bigoplus_{\ell_o = |\ell_i - \ell_f|}^{\ell_i + \ell_f} \boldsymbol{Y}^{\ell_o}(\mathbf{r}).
+\boldsymbol{Y}^{\ell\_i}(\mathbf{r}) \otimes \boldsymbol{Y}^{\ell\_f}(\mathbf{r}) = \boldsymbol{C}^{-1} \bigoplus\_{\ell\_o = |\ell\_i - \ell\_f|}^{\ell\_i + \ell\_f} \boldsymbol{Y}^{\ell\_o}(\mathbf{r}).
 $$
 
-The Clebsch-Gordan coefficients are nothing but the elements of the boring change-of-basis matrix $\boldsymbol{C}$, indexed as $C_{(\ell_i,m_i),(\ell_f,m_f)}^{(\ell_o, m_o)}$.
+The Clebsch-Gordan coefficients are nothing but the elements of the boring change-of-basis matrix $\boldsymbol{C}$, indexed as $C\_{(\ell\_i,m\_i),(\ell\_f,m\_f)}^{(\ell\_o, m\_o)}$.
 
 ## 😩 Tensor Field Networks
 
@@ -302,16 +302,14 @@ Using real spherical harmonics also means that we mostly don’t need to use com
 **Bad News**: Dealing with latent features that must all be treated differently in the neural network gets finicky, especially when dealing with multiple channels.
 This means that notation in TFN has quite a few indices floating about, and keeping track of weights can be slightly annoying.
 
-Essentially, latent node features $\boldsymbol{x}_s^{\ell_i}$ are coefficients multiplying spherical harmonics, and GNN messages are passed by taking their tensor product with spherical harmonic embeddings of displacement vectors $\boldsymbol{Y}^{\ell_f}(\mathbf{r}_{st})$ (multiplied by some learnable components).
+Essentially, latent node features $\boldsymbol{x}\_s^{\ell\_i}$ are coefficients multiplying spherical harmonics, and GNN messages are passed by taking their tensor product with spherical harmonic embeddings of displacement vectors $\boldsymbol{Y}^{\ell\_f}(\mathbf{r}\_{st})$ (multiplied by some learnable components).
 
 ## 🍺 WIP Implementation of TFN
 
 If you’re interested in an unfinished, unpolished, undocumented barebones implementation of TFN in JAX from someone who’s never used JAX before, then boy do I have the repository for you…
 
-https://github.com/ElisR/EquiformerFlux
-
-Specifically, the [Tetris example](https://github.com/ElisR/EquiformerFlux/blob/main/equiformer/examples/tetris.py) shows how to construct an equivariant Tetris shape classifier that only gets trained on one orientation of each shape.
-Also of interest may be the `TFNLayer` module (in `layers.py`), and functions for calculating spherical harmonics and tensor products in `spherical.py` and `tensor_product.py`, respectively.
+Specifically, the [Tetris example](https://github.com/ElisR/TensorFieldNetworks/blob/main/equiformer/examples/tetris.py) shows how to construct an equivariant Tetris shape classifier that only gets trained on one orientation of each shape.
+Also of interest may be the `TFNLayer` module (in `layers.py`), and functions for calculating spherical harmonics and tensor products in `spherical.py` and `tensor\_product.py`, respectively.
 
 One cute part of this repository is that reasonably-efficient JAX implementations of spherical harmonics are computed on the fly (without being hardcoded in like in `e3nn`) through metaprogramming.
 This happens by using the computer algebra of SymPy to generate simplified real spherical harmonics in terms of Cartesian coordinates, which can then be compiled into JAX functions.
