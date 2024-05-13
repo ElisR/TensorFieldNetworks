@@ -60,7 +60,11 @@ You may have noticed from the definitions above that if you have a representatio
 For example, the representation
 
 $$
-\rho\_{1+2}(g) \equiv \begin{bmatrix}\rho\_1(g) & 0 \\ 0 & \rho\_2(g) \end{bmatrix}
+\rho\_{1+2}(g) \equiv
+\begin{bmatrix}
+\rho\_1(g) & 0 \\
+0 & \rho\_2(g)
+\end{bmatrix}
 $$
 
 will satisfy the right group relations, provided $\rho\_1$ and $\rho\_2$ are valid representations, since the blocks never interact during matrix multiplication.
@@ -97,7 +101,27 @@ $$
 $$
 
 $$
-\quad L\_x = \left( \begin{array}{ccc}0 & 0 & 0 \\ 0 & 0 & -1 \\ 0 & 1 & 0\end{array} \right), \quad L\_y = \left( \begin{array}{ccc}0 & 0 & 1 \\ 0 & 0 & 0 \\ -1 & 0 & 0\end{array} \right), \quad L\_z = \left( \begin{array}{ccc}0 & -1 & 0 \\ 1 & 0 & 0 \\ 0 & 0 & 0\end{array} \right)
+L\_x =\left(
+\begin{array}{ccc}
+0 & 0 & 0 \\
+0 & 0 & -1 \\
+0 & 1 & 0
+\end{array}
+\right), \quad
+L\_y = \left(
+\begin{array}{ccc}
+0 & 0 & 1 \\
+0 & 0 & 0 \\
+-1 & 0 & 0
+\end{array}
+\right), \quad
+L\_z = \left(
+\begin{array}{ccc}
+0 & -1 & 0 \\
+1 & 0 & 0 \\
+0 & 0 & 0
+\end{array}
+\right)
 $$
 
 Notice also that these matrices are all antisymmetric, $L\_i = - L\_i^T$.
