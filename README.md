@@ -175,12 +175,22 @@ The basis for $\boldsymbol{L}\_z$ gets fixed when we request the natural orderin
 
 $$
 \boldsymbol{Y}\_{1}^{1}(\mathbf{r})=
-\begin{bmatrix} 0 \\ 0 \\ Y\_1^1(\mathbf{r})
+\begin{bmatrix}
+0 \\
+0 \\
+Y\_1^1(\mathbf{r})
 \end{bmatrix}, \quad
 \boldsymbol{Y}\_{0}^{1}(\mathbf{r})=
-\begin{bmatrix} 0 \\ Y\_0^1(\mathbf{r}) \\ 0
+\begin{bmatrix}
+0 \\
+Y\_0^1(\mathbf{r})
+\\ 0
 \end{bmatrix}, \quad
-\boldsymbol{Y}\_{-1}^{1}(\mathbf{r}) = \begin{bmatrix} Y^1\_{-1}(\mathbf{r}) \\ 0 \\ 0
+\boldsymbol{Y}\_{-1}^{1}(\mathbf{r}) =
+\begin{bmatrix}
+Y^1\_{-1}(\mathbf{r}) \\
+0 \\
+0
 \end{bmatrix}.
 $$
 
@@ -276,7 +286,30 @@ $$
 ### 💬 Footnote: Kronecker product example
 
 $$
-\left[\begin{array}{ll}1 & 2 \\ 3 & 4\end{array}\right] \otimes\left[\begin{array}{ll}0 & 5 \\ 6 & 7\end{array}\right]=\left[\begin{array}{cc|cc}1 \times 0 & 1 \times 5 & 2 \times 0 & 2 \times 5 \\ 1 \times 6 & 1 \times 7 & 2 \times 6 & 2 \times 7 \\ \hline 3 \times 0 & 3 \times 5 & 4 \times 0 & 4 \times 5 \\ 3 \times 6 & 3 \times 7 & 4 \times 6 & 4 \times 7\end{array}\right]=\left[\begin{array}{cc|cc}0 & 5 & 0 & 10 \\ 6 & 7 & 12 & 14 \\ \hline 0 & 15 & 0 & 20 \\ 18 & 21 & 24 & 28\end{array}\right]
+\left[
+\begin{array}{ll}
+1 & 2 \\
+3 & 4
+\end{array}\right] \otimes
+\left[
+\begin{array}{ll}
+0 & 5 \\
+6 & 7
+\end{array}\right] =
+\left[
+\begin{array}{cc|cc}
+1 \times 0 & 1 \times 5 & 2 \times 0 & 2 \times 5 \\
+1 \times 6 & 1 \times 7 & 2 \times 6 & 2 \times 7 \\
+\hline 3 \times 0 & 3 \times 5 & 4 \times 0 & 4 \times 5 \\
+3 \times 6 & 3 \times 7 & 4 \times 6 & 4 \times 7
+\end{array}\right] =
+\left[
+\begin{array}{cc|cc}
+0 & 5 & 0 & 10 \\
+6 & 7 & 12 & 14 \\
+\hline 0 & 15 & 0 & 20 \\
+18 & 21 & 24 & 28
+\end{array}\right]
 $$
 
 This resulting representation will either be reducible or irreducible.
